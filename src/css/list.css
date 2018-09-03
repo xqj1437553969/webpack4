@@ -1,6 +1,4 @@
-html,body{
-  height:100%;
-}
-body{
-	/*background:url(../images/back.jpg);*/
+html{
+	height:100%;
+	background:red;
 }

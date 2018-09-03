@@ -20,7 +20,7 @@ config.HTMLDirs.forEach((page) => {
     const htmlPlugin = new HTMLWebpackPlugin({
         filename: `${page}.html`,
         template: path.resolve(__dirname, `../src/${page}.html`),
-        chunks:[page,'vendor']
+        chunks:[page,'vendor','commons']
     });
     HTMLPlugins.push(htmlPlugin);
     Entries[page] = path.resolve(__dirname, `../src/js/${page}.js`);
@@ -29,6 +29,26 @@ config.HTMLDirs.forEach((page) => {
 module.exports = {
     entry:Entries,
 //  devtool:"cheap-module-source-map",
+    optimization: {
+        splitChunks: {
+			cacheGroups: {
+				commons: {
+					chunks: "initial",
+					name:'commons',
+					minChunks: 2,
+					maxInitialRequests: 5, // The default limit is too small to showcase the effect
+					minSize: 0 // This is example is too small to create commons chunks
+				},
+				vendor: {
+					test: /node_modules/,
+					chunks: "initial",
+					name: "vendor",
+					priority: 10,
+					enforce: true
+				}
+			}
+	    }
+    },
     output:{
         filename:"js/[name].[chunkhash].js",
         path:path.resolve(__dirname,"../dist")
@@ -36,6 +56,16 @@ module.exports = {
     // 加载器
     module:{
         rules:[
+             {
+	            test: require.resolve('jquery'), //require.resolve 用来获取模块的绝对路径
+	            use: [{
+	                loader: 'expose-loader',
+	                options: 'jQuery'
+	            }, {
+	                loader: 'expose-loader',
+	                options: '$'
+	            }]
+	        },
             {  
                //处理html中的img标签中的图片，解决img标签中的图片不会被打包的问题
 		       test:/\.html$/,
@@ -106,7 +136,7 @@ module.exports = {
         // 将 css 抽取到某个文件夹
  		new MiniCssExtractPlugin({
             filename: 'css/[name].[contenthash].css',
-            allChunks: true
+            allChunks: true,
      	}), 
         // 自动生成 HTML 插件
         ...HTMLPlugins,
